@@ -5,6 +5,52 @@ const { signAccessToken } = require("../utils/jwt");
 const { sendEmail } = require("../utils/mailer");
 const { generateVerificationToken, hashToken, getExpiryDate } = require("../utils/emailVerification");
 
+const bootstrapAdmin = asyncHandler(async (req, res) => {
+  const token = req.headers["x-bootstrap-token"];
+  const expected = process.env.BOOTSTRAP_ADMIN_TOKEN;
+
+  if (!expected) {
+    res.status(500);
+    throw new Error("BOOTSTRAP_ADMIN_TOKEN is not set on the server");
+  }
+  if (!token || String(token) !== String(expected)) {
+    res.status(401);
+    throw new Error("Invalid bootstrap token");
+  }
+
+  // Only allow bootstrap if there is no admin yet (safe default)
+  const existingAdminCount = await User.countDocuments({ role: "admin", isArchived: { $ne: true } });
+  if (existingAdminCount > 0) {
+    res.status(409);
+    throw new Error("Admin already exists. Bootstrap is disabled.");
+  }
+
+  const email = String(req.body?.email || "admin@batinos.com").toLowerCase().trim();
+  const password = String(req.body?.password || "admin123");
+  const name = String(req.body?.name || "Admin User").trim();
+
+  if (password.length < 6) {
+    res.status(400);
+    throw new Error("Password must be at least 6 characters");
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const admin = await User.create({
+    name,
+    email,
+    phone: "",
+    passwordHash,
+    role: "admin",
+    isEmailVerified: true, // allow login immediately
+    emailVerification: { tokenHash: "", expiresAt: undefined },
+  });
+
+  res.status(201).json({
+    message: "Admin bootstrap complete",
+    admin: { id: admin._id, email: admin.email, name: admin.name, role: admin.role },
+  });
+});
+
 const register = asyncHandler(async (req, res) => {
   const { name, email, password, phone } = req.body || {};
   if (!name || !email || !password) {
@@ -210,5 +256,5 @@ const me = asyncHandler(async (req, res) => {
   res.json({ user: req.user });
 });
 
-module.exports = { register, verifyEmail, login, forgotPassword, resetPassword, me };
+module.exports = { register, verifyEmail, login, forgotPassword, resetPassword, me, bootstrapAdmin };
 

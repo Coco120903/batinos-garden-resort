@@ -1,6 +1,6 @@
 const express = require("express");
 
-const { register, verifyEmail, login, forgotPassword, resetPassword, me } = require("../controllers/authController");
+const { register, verifyEmail, login, forgotPassword, resetPassword, me, bootstrapAdmin } = require("../controllers/authController");
 const { requireAuth } = require("../middlewares/auth");
 
 const router = express.Router();
@@ -11,6 +11,9 @@ router.post("/login", login);
 router.get("/verify-email", verifyEmail); // token in querystring
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+
+// One-time admin bootstrap (protected by BOOTSTRAP_ADMIN_TOKEN header; only works if no admin exists)
+router.post("/bootstrap-admin", bootstrapAdmin);
 
 // Protected (we'll add auth middleware next step):
 router.get("/me", requireAuth, me);

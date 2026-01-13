@@ -6,6 +6,7 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" --names \"BACKEND,FRONTEND\" --prefix name --prefix-colors \"cyan,magenta\"",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
+    "start": "npm --prefix backend run start",
     "start:backend": "npm --prefix backend run start",
     "build:frontend": "npm --prefix frontend run build"
   },

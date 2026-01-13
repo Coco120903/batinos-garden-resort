@@ -30,10 +30,31 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
+      // Unauthorized
+      // - Do NOT hard-redirect when the 401 came from auth endpoints (login/register/etc),
+      //   otherwise the login page "flashes" and reloads too fast to show the error.
+      const requestUrl = error.config?.url || ''
+      const currentPath = window.location.pathname
+      const isAuthEndpoint =
+        requestUrl.includes('/api/auth/login') ||
+        requestUrl.includes('/api/auth/register') ||
+        requestUrl.includes('/api/auth/forgot-password') ||
+        requestUrl.includes('/api/auth/reset-password') ||
+        requestUrl.includes('/api/auth/verify-email') ||
+        requestUrl.includes('/api/auth/me')
+      const isAuthPage =
+        currentPath === '/login' ||
+        currentPath === '/register' ||
+        currentPath === '/forgot-password' ||
+        currentPath === '/reset-password' ||
+        currentPath.startsWith('/auth/')
+
+      if (!isAuthEndpoint && !isAuthPage) {
+        // Clear token and redirect to login for protected pages
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        window.location.href = '/login'
+      }
     }
     if (error.response?.status === 503 && error.response?.data?.code === 'MAINTENANCE_MODE') {
       // Check if user is admin - admins should not be affected by maintenance

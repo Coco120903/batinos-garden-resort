@@ -4,17 +4,28 @@ async function connectDB(mongoUri) {
   if (!mongoUri) throw new Error("MONGODB_URI is required");
 
   mongoose.set("strictQuery", true);
+  // Disable buffering - fail immediately if not connected
+  mongoose.set("bufferCommands", false);
+  mongoose.set("bufferMaxEntries", 0);
   
   // Connection options for better reliability
   const options = {
-    serverSelectionTimeoutMS: 30000, // 30 seconds
-    socketTimeoutMS: 45000, // 45 seconds
-    connectTimeoutMS: 30000, // 30 seconds
+    serverSelectionTimeoutMS: 60000, // 60 seconds
+    socketTimeoutMS: 90000, // 90 seconds
+    connectTimeoutMS: 60000, // 60 seconds
     retryWrites: true,
     w: 'majority',
+    maxPoolSize: 10,
+    minPoolSize: 1,
   };
 
-  await mongoose.connect(mongoUri, options);
+  try {
+    await mongoose.connect(mongoUri, options);
+    console.log("✅ MongoDB connected successfully");
+  } catch (error) {
+    console.error("❌ MongoDB connection error:", error.message);
+    throw error;
+  }
 }
 
 module.exports = { connectDB };

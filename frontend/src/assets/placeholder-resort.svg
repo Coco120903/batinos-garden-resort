@@ -1,0 +1,39 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#dcfce7"/>
+      <stop offset="0.55" stop-color="#f0fdf4"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="200" y1="140" x2="1000" y2="660" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#16a34a" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#14532d" stop-opacity="0.10"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="800" rx="32" fill="url(#bg)"/>
+  <rect x="80" y="80" width="1040" height="640" rx="28" fill="url(#accent)" stroke="#bbf7d0"/>
+
+  <g opacity="0.9">
+    <path d="M210 570c70-140 180-230 310-230 115 0 195 55 260 140 35 45 80 90 150 90h-720z" fill="#16a34a" fill-opacity="0.16"/>
+    <path d="M260 585c60-120 150-190 260-190 90 0 155 40 210 110 28 35 64 70 120 70H260z" fill="#15803d" fill-opacity="0.12"/>
+  </g>
+
+  <g opacity="0.85">
+    <circle cx="300" cy="260" r="64" fill="#22c55e" fill-opacity="0.18"/>
+    <circle cx="910" cy="250" r="84" fill="#16a34a" fill-opacity="0.14"/>
+    <circle cx="760" cy="520" r="120" fill="#14532d" fill-opacity="0.10"/>
+  </g>
+
+  <g fill="#166534" opacity="0.7">
+    <rect x="230" y="230" width="740" height="24" rx="12" fill-opacity="0.12"/>
+    <rect x="230" y="270" width="520" height="18" rx="9" fill-opacity="0.10"/>
+    <rect x="230" y="310" width="620" height="18" rx="9" fill-opacity="0.10"/>
+  </g>
+
+  <g font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto" text-anchor="middle">
+    <text x="600" y="430" font-size="26" fill="#14532d" fill-opacity="0.75">Image placeholder</text>
+    <text x="600" y="468" font-size="16" fill="#14532d" fill-opacity="0.55">Replace this with a real photo (service / room / facility)</text>
+  </g>
+</svg>
+

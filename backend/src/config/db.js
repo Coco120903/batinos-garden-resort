@@ -6,7 +6,6 @@ async function connectDB(mongoUri) {
   mongoose.set("strictQuery", true);
   // Disable buffering - fail immediately if not connected
   mongoose.set("bufferCommands", false);
-  mongoose.set("bufferMaxEntries", 0);
   
   // Connection options for better reliability
   const options = {

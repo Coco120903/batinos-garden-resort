@@ -8,9 +8,15 @@ async function start() {
   const port = process.env.PORT || 5001;
   const mongoUri = process.env.MONGODB_URI;
 
+  // Try to connect to MongoDB, but don't crash if it fails
   if (mongoUri) {
-    await connectDB(mongoUri);
-    console.log("MongoDB connected");
+    try {
+      await connectDB(mongoUri);
+      console.log("MongoDB connected");
+    } catch (err) {
+      console.error("MongoDB connection failed:", err.message);
+      console.warn("Starting API without database connection. Some features may not work.");
+    }
   } else {
     console.warn("MONGODB_URI not set — starting API without DB connection (dev only)");
   }

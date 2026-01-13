@@ -30,6 +30,21 @@ function createApp() {
   app.use(morgan("dev"));
 
   app.get("/", (req, res) => res.send("Batino's API is running"));
+  app.get("/api/version", (req, res) => {
+    res.json({
+      ok: true,
+      service: process.env.RAILWAY_SERVICE_NAME || "batinos-backend",
+      environment: process.env.RAILWAY_ENVIRONMENT_NAME || process.env.NODE_ENV || "unknown",
+      publicDomain: process.env.RAILWAY_PUBLIC_DOMAIN,
+      commit:
+        process.env.RAILWAY_GIT_COMMIT_SHA ||
+        process.env.RAILWAY_GIT_COMMIT ||
+        process.env.GITHUB_SHA ||
+        process.env.VERCEL_GIT_COMMIT_SHA ||
+        "unknown",
+      now: new Date().toISOString(),
+    });
+  });
 
   // Global maintenance gate (keeps login/site/health available)
   app.use(maintenanceGate);

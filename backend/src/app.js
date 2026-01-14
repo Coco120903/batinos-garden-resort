@@ -23,8 +23,48 @@ const { maintenanceGate } = require("./middlewares/maintenance");
 function createApp() {
   const app = express();
 
-  app.use(helmet());
-  app.use(cors());
+  // Configure CORS to allow Vercel and localhost
+  const allowedOrigins = [
+    'https://batinos-garden-resort.vercel.app',
+    'https://batinos-garden-resort-kw992932p.vercel.app',
+    /^https:\/\/.*\.vercel\.app$/, // Allow all Vercel preview deployments
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ];
+
+  app.use(cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin matches allowed patterns
+      const isAllowed = allowedOrigins.some(allowed => {
+        if (typeof allowed === 'string') {
+          return origin === allowed;
+        }
+        if (allowed instanceof RegExp) {
+          return allowed.test(origin);
+        }
+        return false;
+      });
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        // In development, allow all origins
+        if (process.env.NODE_ENV !== 'production') {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      }
+    },
+    credentials: true,
+  }));
+
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  }));
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
   app.use(morgan("dev"));

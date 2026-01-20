@@ -51,7 +51,13 @@ const serviceSchema = new mongoose.Schema(
     options: { type: [serviceOptionSchema], default: [] },
 
     // Extras (e.g. corkage, appliance fees) maintained by admin:
-    extras: { type: [serviceExtraSchema], default: [] }
+    extras: { type: [serviceExtraSchema], default: [] },
+
+    // Inclusions for villas (room area and pool area)
+    inclusions: {
+      roomArea: [{ type: String }],
+      poolArea: [{ type: String }]
+    }
   },
   { timestamps: true }
 );

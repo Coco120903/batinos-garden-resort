@@ -18,12 +18,73 @@ function RegisterPage() {
   const [success, setSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [phoneError, setPhoneError] = useState(null)
+
+  // Format phone number with auto-spacing (Philippines format: 0912 345 6789)
+  const formatPhoneNumber = (value) => {
+    // Remove all non-digit characters
+    const digits = value.replace(/\D/g, '')
+    
+    // Limit to 11 digits (Philippines mobile format)
+    const limited = digits.slice(0, 11)
+    
+    // Format: 0912 345 6789
+    if (limited.length <= 4) {
+      return limited
+    } else if (limited.length <= 7) {
+      return `${limited.slice(0, 4)} ${limited.slice(4)}`
+    } else {
+      return `${limited.slice(0, 4)} ${limited.slice(4, 7)} ${limited.slice(7)}`
+    }
+  }
+
+  // Validate phone number
+  const validatePhoneNumber = (phone) => {
+    if (!phone || phone.trim() === '') {
+      return null // Optional field, no error if empty
+    }
+    
+    // Remove spaces for validation
+    const digits = phone.replace(/\D/g, '')
+    
+    // Must be 10 or 11 digits
+    if (digits.length < 10 || digits.length > 11) {
+      return 'Phone number must be 10 or 11 digits'
+    }
+    
+    // Must start with 9 (Philippines mobile format)
+    if (!digits.startsWith('9')) {
+      return 'Philippine mobile numbers must start with 9'
+    }
+    
+    // If 11 digits, must start with 09
+    if (digits.length === 11 && !digits.startsWith('09')) {
+      return '11-digit numbers must start with 09'
+    }
+    
+    return null // Valid
+  }
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+    const { name, value } = e.target
+    
+    if (name === 'phone') {
+      const formatted = formatPhoneNumber(value)
+      const validationError = validatePhoneNumber(formatted)
+      
+      setFormData({
+        ...formData,
+        [name]: formatted,
+      })
+      
+      setPhoneError(validationError)
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      })
+    }
+    
     setError(null)
   }
 
@@ -41,6 +102,14 @@ function RegisterPage() {
 
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters')
+      setLoading(false)
+      return
+    }
+
+    // Validate phone number if provided
+    const phoneValidationError = validatePhoneNumber(formData.phone)
+    if (phoneValidationError) {
+      setError(phoneValidationError)
       setLoading(false)
       return
     }
@@ -192,8 +261,19 @@ function RegisterPage() {
                   disabled={loading}
                   placeholder="0912 345 6789"
                   autoComplete="tel"
+                  maxLength={13} // 0912 345 6789 = 13 characters with spaces
                 />
               </div>
+              {phoneError && (
+                <small style={{ color: 'var(--error)', marginTop: '0.25rem', display: 'block' }}>
+                  {phoneError}
+                </small>
+              )}
+              {!phoneError && formData.phone && (
+                <small style={{ color: 'var(--success)', marginTop: '0.25rem', display: 'block' }}>
+                  ✓ Valid phone number format
+                </small>
+              )}
             </div>
 
             <div className="form-group">

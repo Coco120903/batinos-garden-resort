@@ -44,53 +44,13 @@ function ImageCarousel({ images = [], autoPlay = true, interval = 5000 }) {
   }
 
   if (images.length === 0) {
-    // Default placeholder images for demo
-    const defaultImages = [
-      { src: null, alt: 'Resort swimming pool', title: 'Swimming Pools' },
-      { src: null, alt: 'Resort venue hall', title: 'Venue Halls' },
-      { src: null, alt: 'Resort cottages', title: 'Cottages' },
-      { src: null, alt: 'Resort recreation area', title: 'Recreation Area' },
-    ]
+    // Show skeleton loader instead of placeholder
     return (
       <div className="image-carousel">
         <div className="carousel-container">
-          {defaultImages.map((img, idx) => (
-            <div
-              key={idx}
-              className={`carousel-slide ${idx === currentIndex ? 'active' : ''}`}
-            >
-              <ImageSlot src={img.src} alt={img.alt} aspect="21 / 9" />
-              {img.title && (
-                <div className="carousel-caption">
-                  <h3>{img.title}</h3>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        <button
-          className="carousel-btn carousel-btn--prev"
-          onClick={goToPrevious}
-          aria-label="Previous slide"
-        >
-          <ChevronLeft size={24} />
-        </button>
-        <button
-          className="carousel-btn carousel-btn--next"
-          onClick={goToNext}
-          aria-label="Next slide"
-        >
-          <ChevronRight size={24} />
-        </button>
-        <div className="carousel-indicators">
-          {defaultImages.map((_, idx) => (
-            <button
-              key={idx}
-              className={`carousel-indicator ${idx === currentIndex ? 'active' : ''}`}
-              onClick={() => goToSlide(idx)}
-              aria-label={`Go to slide ${idx + 1}`}
-            />
-          ))}
+          <div className="carousel-slide active">
+            <div className="skeleton-media-image" style={{ aspectRatio: '21 / 9', width: '100%', borderRadius: 0 }}></div>
+          </div>
         </div>
       </div>
     )

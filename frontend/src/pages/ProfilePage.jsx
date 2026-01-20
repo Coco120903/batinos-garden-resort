@@ -75,8 +75,12 @@ function ProfilePage() {
       setError(null)
       await deleteAccount(deleteConfirm)
       logout()
-      navigate('/')
+      // Clear history and prevent back button
+      window.history.replaceState(null, '', '/login')
+      navigate('/login', { replace: true })
       alert('Your account has been archived. You can contact support to restore it.')
+      // Force reload to clear any cached state
+      window.location.reload()
     } catch (e) {
       setError(e.response?.data?.message || e.message || 'Failed to delete account')
       setDeleting(false)

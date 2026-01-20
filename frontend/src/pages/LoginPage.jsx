@@ -27,6 +27,25 @@ function LoginPage() {
       sessionStorage.removeItem('showMaintenanceModal')
       sessionStorage.removeItem('maintenanceMessage')
     }
+
+    // Prevent back button navigation after logout
+    // If user tries to go back, replace history to prevent accessing authenticated pages
+    const handlePopState = () => {
+      // Check if user is logged out but trying to go back
+      const token = localStorage.getItem('token')
+      if (!token) {
+        // User is logged out, prevent going back to authenticated pages
+        window.history.pushState(null, '', window.location.href)
+      }
+    }
+
+    // Push a state to prevent back navigation
+    window.history.pushState(null, '', window.location.href)
+    window.addEventListener('popstate', handlePopState)
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
   }, [])
 
   const handleChange = (e) => {

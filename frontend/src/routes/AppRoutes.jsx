@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { isAuthenticated } from '../api/auth'
+import { isAuthenticated, logout } from '../api/auth'
 
 // Layouts
 import UserLayout from '../layouts/UserLayout'
@@ -12,6 +12,9 @@ import ExplorePage from '../pages/ExplorePage'
 import ServicesPage from '../pages/ServicesPage'
 import ContactsPage from '../pages/ContactsPage'
 import BookServicePage from '../pages/BookServicePage'
+import VillaDetailPage from '../pages/VillaDetailPage'
+import SpacesMomentsPage from '../pages/SpacesMomentsPage'
+import EventsPage from '../pages/EventsPage'
 import LoginPage from '../pages/LoginPage'
 import RegisterPage from '../pages/RegisterPage'
 import ForgotPasswordPage from '../pages/ForgotPasswordPage'
@@ -28,8 +31,22 @@ import AdminSchedulePage from '../pages/admin/AdminSchedulePage'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
+  // Check if user is authenticated
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />
+  }
+
+  // Check if session has expired (30 minutes inactivity)
+  const lastActivity = localStorage.getItem('lastActivity')
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000 // 30 minutes
+  if (lastActivity) {
+    const timeSinceLastActivity = Date.now() - parseInt(lastActivity, 10)
+    if (timeSinceLastActivity >= INACTIVITY_TIMEOUT) {
+      // Session expired - logout and redirect
+      logout()
+      window.history.replaceState(null, '', '/login')
+      return <Navigate to="/login" replace />
+    }
   }
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
@@ -51,6 +68,9 @@ function AppRoutes() {
         <Route index element={<HomePage />} />
         <Route path="explore" element={<ExplorePage />} />
         <Route path="services" element={<ServicesPage />} />
+        <Route path="villa/:villaId" element={<VillaDetailPage />} />
+        <Route path="spaces-moments" element={<SpacesMomentsPage />} />
+        <Route path="events" element={<EventsPage />} />
         <Route path="contacts" element={<ContactsPage />} />
         <Route path="terms" element={<TermsPage />} />
         <Route path="privacy" element={<PrivacyPage />} />

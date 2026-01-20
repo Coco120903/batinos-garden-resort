@@ -1,6 +1,7 @@
 import { Outlet, Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { logout, getStoredUser } from '../api/auth'
+import { useAutoLogout } from '../hooks/useAutoLogout'
 import { LogOut, Leaf, ExternalLink, Images, MessageSquareText, CalendarDays, Menu, X, User } from 'lucide-react'
 import './Layout.css'
 
@@ -11,9 +12,16 @@ function AdminLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
 
+  // Enable auto-logout after 30 minutes of inactivity
+  useAutoLogout()
+
   const handleLogout = () => {
     logout()
-    navigate('/')
+    // Clear history and prevent back button
+    window.history.replaceState(null, '', '/login')
+    navigate('/login', { replace: true })
+    // Force reload to clear any cached state
+    window.location.reload()
   }
 
   useEffect(() => {
@@ -21,10 +29,30 @@ function AdminLayout() {
     setAccountOpen(false)
   }, [location.pathname])
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileNavOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileNavOpen])
+
   const navLinkClass = ({ isActive }) => `nav-link-icon ${isActive ? 'nav-link--active' : ''}`
 
   return (
     <div className="layout">
+      {/* Mobile Navigation Overlay */}
+      {mobileNavOpen && (
+        <div
+          className="mobile-nav-overlay mobile-nav-overlay--open"
+          onClick={() => setMobileNavOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <header className="header header-admin">
         <div className="container">
           <div className="header-content">

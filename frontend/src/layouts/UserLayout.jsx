@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
 import { isAuthenticated, logout, getStoredUser } from '../api/auth'
+import { useAutoLogout } from '../hooks/useAutoLogout'
 import { Leaf, LogOut, Shield, User, Menu, X, Phone, Facebook, MapPin, Mail } from 'lucide-react'
 import './Layout.css'
 
@@ -12,9 +13,17 @@ function UserLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
 
+  // Enable auto-logout after 30 minutes of inactivity
+  // Hook handles authentication check internally
+  useAutoLogout()
+
   const handleLogout = () => {
     logout()
-    navigate('/')
+    // Clear history and prevent back button
+    window.history.replaceState(null, '', '/login')
+    navigate('/login', { replace: true })
+    // Force reload to clear any cached state
+    window.location.reload()
   }
 
   // Close mobile menu on route change
@@ -23,10 +32,30 @@ function UserLayout() {
     setAccountOpen(false)
   }, [location.pathname])
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileNavOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileNavOpen])
+
   const navLinkClass = ({ isActive }) => `nav-link ${isActive ? 'nav-link--active' : ''}`
 
   return (
     <div className="layout">
+      {/* Mobile Navigation Overlay */}
+      {mobileNavOpen && (
+        <div
+          className="mobile-nav-overlay mobile-nav-overlay--open"
+          onClick={() => setMobileNavOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <header className="header">
         <div className="container">
           <div className="header-content">

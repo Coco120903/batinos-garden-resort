@@ -23,6 +23,7 @@ import './Page.css'
 function HomePage() {
   const navigate = useNavigate()
   const [site, setSite] = useState(null)
+  const [siteLoading, setSiteLoading] = useState(true)
   const [reviews, setReviews] = useState([])
   const [reviewsLoading, setReviewsLoading] = useState(true)
   const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '' })
@@ -44,6 +45,7 @@ function HomePage() {
       } catch {
         // ignore (fallback to placeholders)
       } finally {
+        setSiteLoading(false)
         setReviewsLoading(false)
       }
     }
@@ -143,7 +145,17 @@ function HomePage() {
     <div className="page home-page">
       {/* Featured Image Carousel - Full Width */}
       <section className="featured-carousel-section">
-        <ImageCarousel images={heroImages} autoPlay={true} interval={5000} />
+        {siteLoading ? (
+          <div className="image-carousel">
+            <div className="carousel-container">
+              <div className="carousel-slide active">
+                <div className="skeleton-media-image" style={{ aspectRatio: '21 / 9', width: '100%', borderRadius: 0 }}></div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <ImageCarousel images={heroImages} autoPlay={true} interval={5000} />
+        )}
       </section>
 
       <div className="container">
@@ -161,7 +173,7 @@ function HomePage() {
             </p>
             <div className="hero-actions">
               <Link to="/services" className="btn btn-primary btn-lg">
-                View Packages <ArrowRight size={18} />
+                View Packages
               </Link>
               <Link to="/explore" className="btn btn-outline btn-lg">
                 Explore Resort
@@ -200,11 +212,15 @@ function HomePage() {
               </ul>
             </div>
             <div className="highlights-image">
-              <ImageCarousel
-                images={highlightsImages}
-                autoPlay={true}
-                interval={6000}
-              />
+              {siteLoading ? (
+                <div className="skeleton-media-image" style={{ aspectRatio: '4 / 3', width: '100%', borderRadius: 'var(--border-radius-lg)' }}></div>
+              ) : (
+                <ImageCarousel
+                  images={highlightsImages}
+                  autoPlay={true}
+                  interval={6000}
+                />
+              )}
             </div>
           </div>
         </section>
@@ -309,7 +325,7 @@ function HomePage() {
             </p>
             <div className="cta-actions">
               <button onClick={handleBookNow} className="btn btn-primary btn-lg">
-                Book Now <ArrowRight size={18} />
+                Book Now
               </button>
             </div>
           </div>

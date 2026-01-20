@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import ImageSlot from '../components/ImageSlot'
 import { getSiteSettings } from '../api/site'
+import exploreHeroImage from '../assets/explore-hero.jpg'
 import './Page.css'
 
 function ExplorePage() {
@@ -51,7 +52,7 @@ function ExplorePage() {
             </p>
             <div className="hero-actions">
               <Link to="/services" className="btn btn-primary btn-lg">
-                View Packages <ArrowRight size={18} />
+                View Packages
               </Link>
               <Link to="/register" className="btn btn-outline btn-lg">
                 Create Account
@@ -59,7 +60,7 @@ function ExplorePage() {
             </div>
           </div>
           <div className="explore-hero__media">
-            <ImageSlot aspect="4 / 3" alt="Resort preview" />
+            <ImageSlot src={exploreHeroImage} aspect="4 / 3" alt="Batino's Farm Resort - Night view with decorative lighting and Hello Kitty statue" />
           </div>
         </section>
 
@@ -107,9 +108,9 @@ function ExplorePage() {
           
           {spacesMoments.length > 3 && (
             <div className="gallery-view-more">
-              <button className="btn btn-outline">
+              <Link to="/spaces-moments" className="btn btn-outline">
                 View More
-              </button>
+              </Link>
             </div>
           )}
         </section>
@@ -131,15 +132,30 @@ function ExplorePage() {
                 </div>
               ))
             ) : recentEvents.length > 0 ? (
-              recentEvents.slice(0, 3).map((item, idx) => (
-                <div key={idx} className="recent-event-card">
-                  <ImageSlot src={item.url} alt={item.alt || item.title || `Recent event ${idx + 1}`} aspect="16 / 9" />
-                  <div className="recent-event-card__body">
-                    <h3>{item.title || 'Event'}</h3>
-                    {item.description && <p>{item.description}</p>}
+              recentEvents.slice(0, 3).map((item, idx) => {
+                // Convert old format to new format if needed
+                const event = item.thumbnail ? item : { thumbnail: item.url, title: item.title, description: item.description, images: [] }
+                return (
+                  <div 
+                    key={idx} 
+                    className="recent-event-card recent-event-card--clickable"
+                    onClick={() => {
+                      window.location.href = `/events?event=${idx}`
+                    }}
+                  >
+                    <ImageSlot src={event.thumbnail} alt={event.title || `Recent event ${idx + 1}`} aspect="16 / 9" />
+                    <div className="recent-event-card__body">
+                      <h3>{event.title || 'Event'}</h3>
+                      {event.description && <p>{event.description}</p>}
+                      {event.images && event.images.length > 0 && (
+                        <div className="event-card__image-count">
+                          {event.images.length} {event.images.length === 1 ? 'photo' : 'photos'}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              })
             ) : (
               <>
                 <div className="recent-event-card">
@@ -169,9 +185,9 @@ function ExplorePage() {
           
           {recentEvents.length > 3 && (
             <div className="recent-events-view-more">
-              <button className="btn btn-outline">
+              <Link to="/events" className="btn btn-outline">
                 View More Events
-              </button>
+              </Link>
             </div>
           )}
         </section>

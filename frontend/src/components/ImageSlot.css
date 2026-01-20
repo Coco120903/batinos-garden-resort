@@ -5,6 +5,7 @@
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
   box-shadow: var(--shadow-sm);
+  position: relative;
 }
 
 .image-slot__img {
@@ -12,5 +13,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  position: relative;
+  z-index: 2;
 }
 

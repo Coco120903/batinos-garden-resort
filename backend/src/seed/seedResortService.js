@@ -6,81 +6,275 @@ async function run() {
   loadEnv();
   await connectDB(process.env.MONGODB_URI);
 
-  const doc = {
-    name: "Batino’s Garden Farm Resort — Package Booking",
-    category: "service",
-    description:
-      "Welcome to your perfect getaway destination! Whether you're planning an intimate family gathering, celebrating a special birthday, reuniting with loved ones, hosting your dream wedding, organizing team building activities, or marking any memorable occasion—we're here to make it unforgettable.\n\n" +
-      "Our resort features everything you need for a complete experience: three beautifully designed swimming pools (adult, teens, and baby pools) with stunning 7-color lighting, videoke entertainment available until 10PM, spacious venue halls for your events, three comfortable cottages for rest and relaxation, fully equipped indoor and outdoor kitchens, clean bathroom and shower facilities, convenient parking for up to 13 vehicles, charming garden statues, a fun playground for the kids, and a half court for sports enthusiasts (bring your own ball). All tables and chairs are provided, so you can focus on creating wonderful memories with your guests.",
-    durationMinutes: 60, // base; actual duration comes from selected option
-    price: 0,
-    isActive: true,
-    images: [],
-    options: [
-      {
-        code: "DAY",
-        name: "Day (8AM–5PM) — no room",
-        durationHours: 9,
-        startTimeLabel: "8AM",
-        basePrice: 8000,
-        includedPax: 25,
-        excessPaxFee: 120,
-        notes: "Bring your own utensils. Dispenser has no water."
-      },
-      {
-        code: "NIGHT",
-        name: "Night (7PM–6AM) — 3 rooms (no AC)",
-        durationHours: 11,
-        startTimeLabel: "7PM",
-        basePrice: 10000,
-        includedPax: 25,
-        excessPaxFee: 150,
-        notes: "Videoke until 10PM only."
-      },
-      {
-        code: "HOURS_22",
-        name: "22 Hours — 3 rooms (no AC)",
-        durationHours: 22,
-        startTimeLabel: "Flexible (confirm schedule)",
-        basePrice: 16000,
-        includedPax: 25,
-        excessPaxFee: 150,
-        notes: "Schedule includes day+night blocks; confirm exact start time with admin."
-      }
-    ],
-    extras: [
-      {
-        code: "APPLIANCE_FEE",
-        name: "Appliances fee (if you bring)",
-        pricing: [
-          { key: "12h", price: 200 },
-          { key: "22h", price: 250 }
+  const villas = [
+    {
+      name: "Villa 1",
+      category: "room",
+      description: "Perfect for intimate gatherings and small celebrations. Villa 1 features a fully air-conditioned room with comfortable queen beds, a private pool area with videoke, and all the amenities you need for a memorable stay. Ideal for families and small groups looking for a cozy and relaxing experience.",
+      inclusions: {
+        roomArea: [
+          "1 ROOM AIR CONDITIONED",
+          "2 QUEEN BED",
+          "3 EXTRA MATTRESS",
+          "1 BATHROOM",
+          "1 TV",
+          "1 MINI SPEAKER",
+          "1 SOFA BED",
+          "1 COFFEE TABLE",
+          "1 CABINET",
+          "1 CR"
+        ],
+        poolArea: [
+          "1 POOL",
+          "1 CR",
+          "VIDEOKE",
+          "REFRIGERATOR",
+          "OVEN",
+          "1 TABLE",
+          "12 CHAIRS",
+          "GRILL",
+          "2 ELECTRIC FAN",
+          "DISPENSER NO WATER"
         ]
       },
-      {
-        code: "GAS_RANGE",
-        name: "Gas range (if you use)",
-        pricing: [
-          { key: "12h", price: 300 },
-          { key: "22h", price: 350 }
+      options: [
+        {
+          code: "DAY",
+          name: "Day (8AM–5PM)",
+          durationHours: 9,
+          startTimeLabel: "8AM",
+          basePrice: 8000,
+          includedPax: 25,
+          excessPaxFee: 120,
+          notes: "Bring your own utensils. Dispenser has no water."
+        },
+        {
+          code: "NIGHT",
+          name: "Night (7PM–6AM)",
+          durationHours: 11,
+          startTimeLabel: "7PM",
+          basePrice: 10000,
+          includedPax: 25,
+          excessPaxFee: 150,
+          notes: "Videoke until 10PM only."
+        },
+        {
+          code: "HOURS_22",
+          name: "22 Hours",
+          durationHours: 22,
+          startTimeLabel: "Flexible (confirm schedule)",
+          basePrice: 16000,
+          includedPax: 25,
+          excessPaxFee: 150,
+          notes: "Schedule includes day+night blocks; confirm exact start time with admin."
+        }
+      ],
+      extras: [
+        {
+          code: "APPLIANCE_FEE",
+          name: "Per Appliances (if you bring)",
+          pricing: [
+            { key: "12h", price: 200 },
+            { key: "22h", price: 250 }
+          ]
+        }
+      ]
+    },
+    {
+      name: "Villa 2",
+      category: "room",
+      description: "Our most spacious villa option, perfect for larger groups and events. Villa 2 includes everything from Villa 1 plus additional amenities like gas stove, extra tables and chairs, rattan furniture, and more. With 20 tables, 3 long tables, and extensive seating, it's ideal for celebrations, reunions, and corporate events.",
+      inclusions: {
+        roomArea: [
+          "1 ROOM AIR CONDITIONED",
+          "2 QUEEN BED",
+          "3 EXTRA MATTRESS",
+          "1 BATHROOM",
+          "1 TV",
+          "1 MINI SPEAKER",
+          "1 SOFA BED",
+          "1 COFFEE TABLE",
+          "1 CABINET",
+          "1 HUMIDIFIER"
+        ],
+        poolArea: [
+          "1 POOL",
+          "1 CR",
+          "VIDEOKE",
+          "REFRIGERATOR",
+          "OVEN",
+          "1 TABLE",
+          "12 CHAIRS",
+          "GRILL",
+          "2 ELECTRIC FAN",
+          "DISPENSER NO WATER",
+          "GAS STOVE (12HRS ₱350 / 22HRS ₱400)",
+          "COFFEE TABLE / 3 CHAIRS",
+          "1 RATTAN CHAIR",
+          "20 TABLES",
+          "3 LONG TABLES",
+          "2 ELECTRIC FAN"
         ]
       },
-      {
-        code: "CORKAGE_CATERING",
-        name: "Corkage (catering)",
-        pricing: [{ key: "flat", price: 1500 }],
-        notes: "Applies if bringing catering."
-      }
-    ]
-  };
+      options: [
+        {
+          code: "DAY",
+          name: "Day (8AM–5PM)",
+          durationHours: 9,
+          startTimeLabel: "8AM",
+          basePrice: 8000,
+          includedPax: 25,
+          excessPaxFee: 120,
+          notes: "Bring your own utensils. Dispenser has no water."
+        },
+        {
+          code: "NIGHT",
+          name: "Night (7PM–6AM)",
+          durationHours: 11,
+          startTimeLabel: "7PM",
+          basePrice: 10000,
+          includedPax: 25,
+          excessPaxFee: 150,
+          notes: "Videoke until 10PM only."
+        },
+        {
+          code: "HOURS_22",
+          name: "22 Hours",
+          durationHours: 22,
+          startTimeLabel: "Flexible (confirm schedule)",
+          basePrice: 16000,
+          includedPax: 25,
+          excessPaxFee: 150,
+          notes: "Schedule includes day+night blocks; confirm exact start time with admin."
+        }
+      ],
+      extras: [
+        {
+          code: "APPLIANCE_FEE",
+          name: "Per Appliances (if you bring)",
+          pricing: [
+            { key: "12h", price: 200 },
+            { key: "22h", price: 250 }
+          ]
+        },
+        {
+          code: "GAS_STOVE",
+          name: "Gas Stove",
+          pricing: [
+            { key: "12h", price: 350 },
+            { key: "22h", price: 400 }
+          ]
+        }
+      ]
+    },
+    {
+      name: "Villa 3",
+      category: "room",
+      description: "A charming villa perfect for those seeking comfort and relaxation. Villa 3 features a cozy air-conditioned room, private pool area with all essential amenities, gas stove option, and a beautiful rattan swing. With 20 tables and 3 long tables available, it's great for medium-sized gatherings and special occasions.",
+      inclusions: {
+        roomArea: [
+          "1 ROOM AIR CONDITIONED",
+          "2 QUEEN BED",
+          "3 EXTRA MATTRESS",
+          "1 BATHROOM",
+          "1 TV",
+          "1 MINI SPEAKER"
+        ],
+        poolArea: [
+          "1 POOL",
+          "1 CR",
+          "VIDEOKE",
+          "REFRIGERATOR",
+          "OVEN",
+          "1 TABLE",
+          "12 CHAIRS",
+          "GRILL",
+          "2 ELECTRIC FAN",
+          "DISPENSER NO WATER",
+          "GAS STOVE (12HRS ₱350 / 22HRS ₱400)",
+          "COFFEE TABLE / 3 CHAIRS",
+          "1 RATTAN SWING",
+          "20 TABLES",
+          "3 LONG TABLES",
+          "2 ELECTRIC FAN"
+        ]
+      },
+      options: [
+        {
+          code: "DAY",
+          name: "Day (8AM–5PM)",
+          durationHours: 9,
+          startTimeLabel: "8AM",
+          basePrice: 8000,
+          includedPax: 25,
+          excessPaxFee: 120,
+          notes: "Bring your own utensils. Dispenser has no water."
+        },
+        {
+          code: "NIGHT",
+          name: "Night (7PM–6AM)",
+          durationHours: 11,
+          startTimeLabel: "7PM",
+          basePrice: 10000,
+          includedPax: 25,
+          excessPaxFee: 150,
+          notes: "Videoke until 10PM only."
+        },
+        {
+          code: "HOURS_22",
+          name: "22 Hours",
+          durationHours: 22,
+          startTimeLabel: "Flexible (confirm schedule)",
+          basePrice: 16000,
+          includedPax: 25,
+          excessPaxFee: 150,
+          notes: "Schedule includes day+night blocks; confirm exact start time with admin."
+        }
+      ],
+      extras: [
+        {
+          code: "APPLIANCE_FEE",
+          name: "Per Appliances (if you bring)",
+          pricing: [
+            { key: "12h", price: 200 },
+            { key: "22h", price: 250 }
+          ]
+        },
+        {
+          code: "GAS_STOVE",
+          name: "Gas Stove",
+          pricing: [
+            { key: "12h", price: 350 },
+            { key: "22h", price: 400 }
+          ]
+        }
+      ]
+    }
+  ];
 
-  await Service.findOneAndUpdate({ name: doc.name, category: doc.category }, doc, {
-    new: true,
-    upsert: true,
-    runValidators: true
-  });
+  for (const villa of villas) {
+    const doc = {
+      name: villa.name,
+      category: villa.category,
+      description: villa.description,
+      durationMinutes: 60,
+      price: 0,
+      isActive: true,
+      images: [],
+      options: villa.options,
+      extras: villa.extras,
+      inclusions: villa.inclusions
+    };
 
-  console.log("Seeded resort service:", doc.name);
+    await Service.findOneAndUpdate({ name: doc.name, category: doc.category }, doc, {
+      new: true,
+      upsert: true,
+      runValidators: true
+    });
+
+    console.log("Seeded villa service:", doc.name);
+  }
+
   process.exit(0);
 }
 

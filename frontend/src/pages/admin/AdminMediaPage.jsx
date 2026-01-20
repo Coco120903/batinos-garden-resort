@@ -24,10 +24,16 @@ function AdminMediaPage() {
   const [highlightsDraft, setHighlightsDraft] = useState([])
   const [spacesMomentsDraft, setSpacesMomentsDraft] = useState([])
   const [recentEventsDraft, setRecentEventsDraft] = useState([])
+  const [villa1Draft, setVilla1Draft] = useState([])
+  const [villa2Draft, setVilla2Draft] = useState([])
+  const [villa3Draft, setVilla3Draft] = useState([])
   const [editingHero, setEditingHero] = useState(null) // { index, title, description }
   const [editingHighlights, setEditingHighlights] = useState(null) // { index, title, description }
   const [editingSpacesMoments, setEditingSpacesMoments] = useState(null) // { index, title, description }
   const [editingRecentEvents, setEditingRecentEvents] = useState(null) // { index, title, description }
+  const [editingVilla1, setEditingVilla1] = useState(null) // { index, title, description }
+  const [editingVilla2, setEditingVilla2] = useState(null) // { index, title, description }
+  const [editingVilla3, setEditingVilla3] = useState(null) // { index, title, description }
   
   // Pagination states
   const [heroPage, setHeroPage] = useState(1)
@@ -49,9 +55,17 @@ function AdminMediaPage() {
   const [highlightsDescription, setHighlightsDescription] = useState('')
   const [spacesMomentsFile, setSpacesMomentsFile] = useState(null)
   const [spacesMomentsTitle, setSpacesMomentsTitle] = useState('')
-  const [recentEventsFile, setRecentEventsFile] = useState(null)
+  const [recentEventsThumbnailFile, setRecentEventsThumbnailFile] = useState(null)
   const [recentEventsTitle, setRecentEventsTitle] = useState('')
   const [recentEventsDescription, setRecentEventsDescription] = useState('')
+  const [recentEventsGalleryFiles, setRecentEventsGalleryFiles] = useState([]) // For multiple images
+  const [editingEventGallery, setEditingEventGallery] = useState(null) // { eventIndex, galleryImages: [] }
+  const [villa1File, setVilla1File] = useState(null)
+  const [villa1Title, setVilla1Title] = useState('')
+  const [villa2File, setVilla2File] = useState(null)
+  const [villa2Title, setVilla2Title] = useState('')
+  const [villa3File, setVilla3File] = useState(null)
+  const [villa3Title, setVilla3Title] = useState('')
 
   const fetchAll = async () => {
     try {
@@ -62,7 +76,25 @@ function AdminMediaPage() {
       setHeroDraft(siteRes?.home?.heroImages || [])
       setHighlightsDraft(siteRes?.home?.highlightsImages || [])
       setSpacesMomentsDraft(siteRes?.home?.spacesMoments || [])
-      setRecentEventsDraft(siteRes?.home?.recentEvents || [])
+      // Convert old format to new format if needed
+      const events = siteRes?.home?.recentEvents || []
+      const convertedEvents = events.map(event => {
+        // If it's the old format (has url property), convert to new format
+        if (event.url && !event.thumbnail) {
+          return {
+            thumbnail: event.url,
+            title: event.title || '',
+            description: event.description || '',
+            images: []
+          }
+        }
+        // Already in new format
+        return event
+      })
+      setRecentEventsDraft(convertedEvents)
+      setVilla1Draft(siteRes?.home?.villa1Images || [])
+      setVilla2Draft(siteRes?.home?.villa2Images || [])
+      setVilla3Draft(siteRes?.home?.villa3Images || [])
       setError(null)
     } catch (e) {
       setError(e.response?.data?.message || e.message || 'Failed to load media')
@@ -76,7 +108,7 @@ function AdminMediaPage() {
   }, [])
 
   const addToDraft = (where, url, title = '', alt = '', description = '') => {
-    const item = { url, title: title.trim() || 'Untitled', alt, description }
+    const item = { url, title: title.trim() || '', alt, description }
     if (where === 'hero') {
       if (heroDraft.length >= 5) {
         alert('Maximum 5 images allowed in Hero Carousel')
@@ -104,6 +136,15 @@ function AdminMediaPage() {
         return
       }
       setRecentEventsDraft((p) => [item, ...p])
+    }
+    if (where === 'villa1') {
+      setVilla1Draft((p) => [item, ...p])
+    }
+    if (where === 'villa2') {
+      setVilla2Draft((p) => [item, ...p])
+    }
+    if (where === 'villa3') {
+      setVilla3Draft((p) => [item, ...p])
     }
   }
 
@@ -164,15 +205,117 @@ function AdminMediaPage() {
   }
 
   const addRecentEventsImage = async () => {
-    if (!recentEventsFile) return
+    if (!recentEventsThumbnailFile || !recentEventsTitle.trim()) {
+      alert('Please provide a thumbnail image and title for the event.')
+      return
+    }
+    if (recentEventsDraft.length >= 3) {
+      alert('Maximum 3 events allowed')
+      return
+    }
     try {
-      const dataUrl = await handleFileToDataUrl(recentEventsFile)
-      addToDraft('recentEvents', dataUrl, recentEventsTitle.trim(), '', recentEventsDescription.trim())
-      setRecentEventsFile(null)
+      const thumbnailUrl = await handleFileToDataUrl(recentEventsThumbnailFile)
+      
+      // Process gallery images
+      const galleryUrls = []
+      for (const file of recentEventsGalleryFiles) {
+        const url = await handleFileToDataUrl(file)
+        galleryUrls.push(url)
+      }
+
+      const newEvent = {
+        thumbnail: thumbnailUrl,
+        title: recentEventsTitle.trim(),
+        description: recentEventsDescription.trim(),
+        images: galleryUrls
+      }
+
+      setRecentEventsDraft([...recentEventsDraft, newEvent])
+      setRecentEventsThumbnailFile(null)
       setRecentEventsTitle('')
       setRecentEventsDescription('')
-      // Reset file input
-      const fileInput = document.getElementById('recent-events-file-input')
+      setRecentEventsGalleryFiles([])
+      
+      // Reset file inputs
+      const thumbnailInput = document.getElementById('recent-events-thumbnail-input')
+      const galleryInput = document.getElementById('recent-events-gallery-input')
+      if (thumbnailInput) thumbnailInput.value = ''
+      if (galleryInput) galleryInput.value = ''
+    } catch (err) {
+      alert('Failed to process image. Please try again.')
+    }
+  }
+
+  const handleGalleryFilesChange = (e) => {
+    const files = Array.from(e.target.files || [])
+    setRecentEventsGalleryFiles(files)
+  }
+
+  const addImagesToEventGallery = async (eventIndex) => {
+    const fileInput = document.createElement('input')
+    fileInput.type = 'file'
+    fileInput.accept = 'image/*'
+    fileInput.multiple = true
+    fileInput.onchange = async (e) => {
+      const files = Array.from(e.target.files || [])
+      try {
+        const newImageUrls = []
+        for (const file of files) {
+          const url = await handleFileToDataUrl(file)
+          newImageUrls.push(url)
+        }
+        const updatedEvents = [...recentEventsDraft]
+        updatedEvents[eventIndex].images = [...(updatedEvents[eventIndex].images || []), ...newImageUrls]
+        setRecentEventsDraft(updatedEvents)
+      } catch (err) {
+        alert('Failed to process images. Please try again.')
+      }
+    }
+    fileInput.click()
+  }
+
+  const removeImageFromEventGallery = (eventIndex, imageIndex) => {
+    const updatedEvents = [...recentEventsDraft]
+    updatedEvents[eventIndex].images = updatedEvents[eventIndex].images.filter((_, idx) => idx !== imageIndex)
+    setRecentEventsDraft(updatedEvents)
+  }
+
+  const addVilla1Image = async () => {
+    if (!villa1File) return
+    try {
+      const dataUrl = await handleFileToDataUrl(villa1File)
+      addToDraft('villa1', dataUrl, villa1Title.trim(), '', '')
+      setVilla1File(null)
+      setVilla1Title('')
+      const fileInput = document.getElementById('villa1-file-input')
+      if (fileInput) fileInput.value = ''
+    } catch (err) {
+      alert('Failed to process image. Please try again.')
+    }
+  }
+
+  const addVilla2Image = async () => {
+    if (!villa2File) return
+    try {
+      const dataUrl = await handleFileToDataUrl(villa2File)
+      addToDraft('villa2', dataUrl, villa2Title.trim(), '', '')
+      setVilla2File(null)
+      setVilla2Title('')
+      const fileInput = document.getElementById('villa2-file-input')
+      if (fileInput) fileInput.value = ''
+    } catch (err) {
+      alert('Failed to process image. Please try again.')
+    }
+  }
+
+  const addVilla3Image = async () => {
+    if (!villa3File) return
+    try {
+      const dataUrl = await handleFileToDataUrl(villa3File)
+      addToDraft('villa3', dataUrl, villa3Title.trim(), '', '')
+      setVilla3File(null)
+      setVilla3Title('')
+      const fileInput = document.getElementById('villa3-file-input')
       if (fileInput) fileInput.value = ''
     } catch (err) {
       alert('Failed to process image. Please try again.')
@@ -193,6 +336,18 @@ function AdminMediaPage() {
 
   const updateRecentEventsItem = (idx, updates) => {
     setRecentEventsDraft((p) => p.map((item, i) => (i === idx ? { ...item, ...updates } : item)))
+  }
+
+  const updateVilla1Item = (idx, updates) => {
+    setVilla1Draft((p) => p.map((item, i) => (i === idx ? { ...item, ...updates } : item)))
+  }
+
+  const updateVilla2Item = (idx, updates) => {
+    setVilla2Draft((p) => p.map((item, i) => (i === idx ? { ...item, ...updates } : item)))
+  }
+
+  const updateVilla3Item = (idx, updates) => {
+    setVilla3Draft((p) => p.map((item, i) => (i === idx ? { ...item, ...updates } : item)))
   }
 
   const saveHeroEdit = () => {
@@ -235,6 +390,36 @@ function AdminMediaPage() {
     }
   }
 
+  const saveVilla1Edit = () => {
+    if (editingVilla1 !== null) {
+      updateVilla1Item(editingVilla1.index, {
+        title: editingVilla1.title || '',
+        description: editingVilla1.description || ''
+      })
+      setEditingVilla1(null)
+    }
+  }
+
+  const saveVilla2Edit = () => {
+    if (editingVilla2 !== null) {
+      updateVilla2Item(editingVilla2.index, {
+        title: editingVilla2.title || '',
+        description: editingVilla2.description || ''
+      })
+      setEditingVilla2(null)
+    }
+  }
+
+  const saveVilla3Edit = () => {
+    if (editingVilla3 !== null) {
+      updateVilla3Item(editingVilla3.index, {
+        title: editingVilla3.title || '',
+        description: editingVilla3.description || ''
+      })
+      setEditingVilla3(null)
+    }
+  }
+
   const removeFromDraft = (where, idx) => {
     if (where === 'hero') {
       setHeroDraft((p) => {
@@ -268,6 +453,15 @@ function AdminMediaPage() {
     if (where === 'recentEvents') {
       setRecentEventsDraft((p) => p.filter((_, i) => i !== idx))
     }
+    if (where === 'villa1') {
+      setVilla1Draft((p) => p.filter((_, i) => i !== idx))
+    }
+    if (where === 'villa2') {
+      setVilla2Draft((p) => p.filter((_, i) => i !== idx))
+    }
+    if (where === 'villa3') {
+      setVilla3Draft((p) => p.filter((_, i) => i !== idx))
+    }
   }
 
   const saveSettings = async () => {
@@ -280,6 +474,9 @@ function AdminMediaPage() {
           highlightsImages: highlightsDraft,
           spacesMoments: spacesMomentsDraft,
           recentEvents: recentEventsDraft,
+          villa1Images: villa1Draft,
+          villa2Images: villa2Draft,
+          villa3Images: villa3Draft,
         },
       })
       await fetchAll()
@@ -394,8 +591,9 @@ function AdminMediaPage() {
           </button>
         </div>
 
-        <div className="analytics-section">
-          <h2>Home: Hero Carousel</h2>
+        <div className="media-section-card">
+          <div className="analytics-section">
+            <h2>Home: Hero Carousel</h2>
           <div className="media-add" style={{ marginBottom: 'var(--spacing-lg)' }}>
             <input
               type="file"
@@ -466,7 +664,9 @@ function AdminMediaPage() {
                       </div>
                     ) : (
                       <>
-                        <div className="media-card__title">{img.title || 'Untitled'}</div>
+                        {img.title && (
+                          <div className="media-card__title">{img.title}</div>
+                        )}
                         {img.description && (
                           <div className="media-card__description" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
                             {img.description}
@@ -597,7 +797,9 @@ function AdminMediaPage() {
                       </div>
                     ) : (
                       <>
-                        <div className="media-card__title">{img.title || 'Untitled'}</div>
+                        {img.title && (
+                          <div className="media-card__title">{img.title}</div>
+                        )}
                         {img.description && (
                           <div className="media-card__description" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
                             {img.description}
@@ -656,10 +858,12 @@ function AdminMediaPage() {
               </button>
             </div>
           )}
+          </div>
         </div>
 
-        <div className="analytics-section" style={{ marginTop: 'var(--spacing-2xl)' }}>
-          <h2>Explore: Spaces & Moments</h2>
+        <div className="media-section-card media-section-card--blue">
+          <div className="analytics-section">
+            <h2>Explore: Spaces & Moments</h2>
           <div className="media-add" style={{ marginBottom: 'var(--spacing-lg)' }}>
             <input
               type="file"
@@ -709,7 +913,9 @@ function AdminMediaPage() {
                       </div>
                     ) : (
                       <>
-                        <div className="media-card__title">{img.title || 'Untitled'}</div>
+                        {img.title && (
+                          <div className="media-card__title">{img.title}</div>
+                        )}
                         <div className="media-card__sub" style={{ 
                           fontSize: '0.75rem', 
                           color: 'var(--text-muted)',
@@ -743,29 +949,95 @@ function AdminMediaPage() {
           </div>
 
           <h2 style={{ marginTop: '2rem' }}>Explore: Recent Events</h2>
-          <div className="media-add" style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <input
-              type="file"
-              id="recent-events-file-input"
-              accept="image/*"
-              onChange={(e) => setRecentEventsFile(e.target.files?.[0] || null)}
-              style={{ padding: '0.5rem' }}
-            />
-            <input
-              type="text"
-              placeholder="Title (e.g., Birthday Celebration)"
-              value={recentEventsTitle}
-              onChange={(e) => setRecentEventsTitle(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Description (optional)"
-              value={recentEventsDescription}
-              onChange={(e) => setRecentEventsDescription(e.target.value)}
-            />
-            <button className="btn btn-primary btn-sm" onClick={addRecentEventsImage} disabled={!recentEventsFile || recentEventsDraft.length >= 3}>
-              <Plus size={18} /> Add to Recent Events {recentEventsDraft.length >= 3 && '(Max 3)'}
-            </button>
+          <div className="event-form-card">
+            <div className="event-form-header">
+              <h3>Add New Event</h3>
+              <span className="event-form-badge">{recentEventsDraft.length} / 3 events</span>
+            </div>
+            <div className="event-form-body">
+              <div className="event-form-row">
+                <div className="event-form-group">
+                  <label className="event-form-label">
+                    <span>Thumbnail Image (Main Image)</span>
+                    <span className="required-asterisk">*</span>
+                  </label>
+                  <div className="file-input-wrapper">
+                    <input
+                      type="file"
+                      id="recent-events-thumbnail-input"
+                      accept="image/*"
+                      onChange={(e) => setRecentEventsThumbnailFile(e.target.files?.[0] || null)}
+                      className="file-input"
+                    />
+                    {recentEventsThumbnailFile && (
+                      <div className="file-selected">
+                        ✓ {recentEventsThumbnailFile.name}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="event-form-group">
+                  <label className="event-form-label">
+                    <span>Additional Images (Gallery)</span>
+                    <span className="optional-badge">Optional</span>
+                  </label>
+                  <div className="file-input-wrapper">
+                    <input
+                      type="file"
+                      id="recent-events-gallery-input"
+                      accept="image/*"
+                      multiple
+                      onChange={handleGalleryFilesChange}
+                      className="file-input"
+                    />
+                    {recentEventsGalleryFiles.length > 0 && (
+                      <div className="file-selected">
+                        ✓ {recentEventsGalleryFiles.length} {recentEventsGalleryFiles.length === 1 ? 'image' : 'images'} selected
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="event-form-row">
+                <div className="event-form-group event-form-group--full">
+                  <label className="event-form-label">
+                    <span>Event Title</span>
+                    <span className="required-asterisk">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Birthday Celebration"
+                    value={recentEventsTitle}
+                    onChange={(e) => setRecentEventsTitle(e.target.value)}
+                    className="event-form-input"
+                  />
+                </div>
+              </div>
+              <div className="event-form-row">
+                <div className="event-form-group event-form-group--full">
+                  <label className="event-form-label">
+                    <span>Event Description</span>
+                    <span className="optional-badge">Optional</span>
+                  </label>
+                  <textarea
+                    placeholder="Describe the event, occasion, or celebration..."
+                    value={recentEventsDescription}
+                    onChange={(e) => setRecentEventsDescription(e.target.value)}
+                    rows={3}
+                    className="event-form-textarea"
+                  />
+                </div>
+              </div>
+              <div className="event-form-actions">
+                <button 
+                  className="btn btn-primary" 
+                  onClick={addRecentEventsImage} 
+                  disabled={!recentEventsThumbnailFile || !recentEventsTitle.trim() || recentEventsDraft.length >= 3}
+                >
+                  <Plus size={18} /> Add Event {recentEventsDraft.length >= 3 && '(Max 3)'}
+                </button>
+              </div>
+            </div>
           </div>
           <div className="media-grid">
             {recentEventsDraft.length === 0 ? (
@@ -773,9 +1045,26 @@ function AdminMediaPage() {
                 <p>No events yet. Add events to display in the Explore page.</p>
               </div>
             ) : (
-              recentEventsDraft.map((img, idx) => (
-                <div key={`${img.url}-${idx}`} className="media-card">
-                  <ImageSlot src={img.url} alt={img.alt || img.title || 'Recent event image'} aspect="16 / 9" />
+              recentEventsDraft.map((event, idx) => (
+                <div key={`event-${idx}`} className="media-card" style={{ position: 'relative' }}>
+                  <div style={{ position: 'relative' }}>
+                    <ImageSlot src={event.thumbnail} alt={event.title || 'Recent event image'} aspect="16 / 9" />
+                    {event.images && event.images.length > 0 && (
+                      <div style={{ 
+                        position: 'absolute', 
+                        top: '0.5rem', 
+                        right: '0.5rem', 
+                        background: 'rgba(0,0,0,0.7)', 
+                        color: 'white', 
+                        padding: '0.25rem 0.5rem', 
+                        borderRadius: 'var(--border-radius)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600
+                      }}>
+                        +{event.images.length} {event.images.length === 1 ? 'photo' : 'photos'}
+                      </div>
+                    )}
+                  </div>
                   <div className="media-card__meta">
                     {editingRecentEvents?.index === idx ? (
                       <div className="media-edit-form">
@@ -804,11 +1093,109 @@ function AdminMediaPage() {
                       </div>
                     ) : (
                       <>
-                        <div className="media-card__title">{img.title || 'Untitled'}</div>
-                        {img.description && (
+                        {event.title && (
+                          <div className="media-card__title">{event.title}</div>
+                        )}
+                        {event.description && (
                           <div className="media-card__description" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                            {img.description}
+                            {event.description}
                           </div>
+                        )}
+                        <div className="media-card__sub" style={{ 
+                          fontSize: '0.75rem', 
+                          color: 'var(--text-muted)',
+                          marginTop: '0.5rem'
+                        }}>
+                          Thumbnail: {event.thumbnail?.startsWith('data:') ? 'Uploaded Image' : 'Image URL'}
+                          {event.images && event.images.length > 0 && (
+                            <div style={{ marginTop: '0.25rem' }}>
+                              Gallery: {event.images.length} {event.images.length === 1 ? 'image' : 'images'}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="media-card__actions">
+                    {editingRecentEvents?.index !== idx && (
+                      <>
+                        <button className="btn btn-outline btn-xs" onClick={() => setEditingRecentEvents({ index: idx, title: event.title || '', description: event.description || '' })}>
+                          <Save size={16} /> Edit
+                        </button>
+                        <button className="btn btn-outline btn-xs" onClick={() => addImagesToEventGallery(idx)}>
+                          <Plus size={16} /> Add Images
+                        </button>
+                        {event.images && event.images.length > 0 && (
+                          <div className="event-gallery-preview">
+                            <span className="event-gallery-count">{event.images.length} gallery {event.images.length === 1 ? 'image' : 'images'}</span>
+                          </div>
+                        )}
+                        <button className="btn btn-danger btn-xs" onClick={() => removeFromDraft('recentEvents', idx)}>
+                          <Trash2 size={16} /> Remove
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          </div>
+        </div>
+
+        <div className="media-section-card media-section-card--purple">
+          <div className="analytics-section">
+            <h2>Villa 1 Images</h2>
+          <div className="media-add" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <input
+              type="file"
+              id="villa1-file-input"
+              accept="image/*"
+              onChange={(e) => setVilla1File(e.target.files?.[0] || null)}
+              style={{ padding: '0.5rem' }}
+            />
+            <input
+              type="text"
+              placeholder="Title (optional)"
+              value={villa1Title}
+              onChange={(e) => setVilla1Title(e.target.value)}
+            />
+            <button className="btn btn-primary btn-sm" onClick={addVilla1Image} disabled={!villa1File}>
+              <Plus size={18} /> Add to Villa 1
+            </button>
+          </div>
+          <div className="media-grid">
+            {villa1Draft.length === 0 ? (
+              <div className="empty-state">
+                <p>No images yet. Add images for Villa 1.</p>
+              </div>
+            ) : (
+              villa1Draft.map((img, idx) => (
+                <div key={`${img.url}-${idx}`} className="media-card">
+                  <ImageSlot src={img.url} alt={img.alt || img.title || 'Villa 1 image'} aspect="16 / 9" />
+                  <div className="media-card__meta">
+                    {editingVilla1?.index === idx ? (
+                      <div className="media-edit-form">
+                        <input
+                          type="text"
+                          placeholder="Title (optional)"
+                          value={editingVilla1.title || ''}
+                          onChange={(e) => setEditingVilla1({ ...editingVilla1, title: e.target.value })}
+                          style={{ marginBottom: '0.5rem', padding: '0.5rem', width: '100%' }}
+                        />
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button className="btn btn-primary btn-xs" onClick={saveVilla1Edit}>
+                            <Save size={16} /> Save
+                          </button>
+                          <button className="btn btn-outline btn-xs" onClick={() => setEditingVilla1(null)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {img.title && (
+                          <div className="media-card__title">{img.title}</div>
                         )}
                         <div className="media-card__sub" style={{ 
                           fontSize: '0.75rem', 
@@ -826,12 +1213,12 @@ function AdminMediaPage() {
                     )}
                   </div>
                   <div className="media-card__actions">
-                    {editingRecentEvents?.index !== idx && (
+                    {editingVilla1?.index !== idx && (
                       <>
-                        <button className="btn btn-outline btn-xs" onClick={() => setEditingRecentEvents({ index: idx, title: img.title || '', description: img.description || '' })}>
+                        <button className="btn btn-outline btn-xs" onClick={() => setEditingVilla1({ index: idx, title: img.title || '', description: img.description || '' })}>
                           <Save size={16} /> Edit
                         </button>
-                        <button className="btn btn-danger btn-xs" onClick={() => removeFromDraft('recentEvents', idx)}>
+                        <button className="btn btn-danger btn-xs" onClick={() => removeFromDraft('villa1', idx)}>
                           <Trash2 size={16} /> Remove
                         </button>
                       </>
@@ -840,6 +1227,179 @@ function AdminMediaPage() {
                 </div>
               ))
             )}
+          </div>
+          </div>
+
+          <div className="analytics-section" style={{ marginTop: 'var(--spacing-2xl)' }}>
+            <h2>Villa 2 Images</h2>
+          <div className="media-add" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <input
+              type="file"
+              id="villa2-file-input"
+              accept="image/*"
+              onChange={(e) => setVilla2File(e.target.files?.[0] || null)}
+              style={{ padding: '0.5rem' }}
+            />
+            <input
+              type="text"
+              placeholder="Title (optional)"
+              value={villa2Title}
+              onChange={(e) => setVilla2Title(e.target.value)}
+            />
+            <button className="btn btn-primary btn-sm" onClick={addVilla2Image} disabled={!villa2File}>
+              <Plus size={18} /> Add to Villa 2
+            </button>
+          </div>
+          <div className="media-grid">
+            {villa2Draft.length === 0 ? (
+              <div className="empty-state">
+                <p>No images yet. Add images for Villa 2.</p>
+              </div>
+            ) : (
+              villa2Draft.map((img, idx) => (
+                <div key={`${img.url}-${idx}`} className="media-card">
+                  <ImageSlot src={img.url} alt={img.alt || img.title || 'Villa 2 image'} aspect="16 / 9" />
+                  <div className="media-card__meta">
+                    {editingVilla2?.index === idx ? (
+                      <div className="media-edit-form">
+                        <input
+                          type="text"
+                          placeholder="Title (optional)"
+                          value={editingVilla2.title || ''}
+                          onChange={(e) => setEditingVilla2({ ...editingVilla2, title: e.target.value })}
+                          style={{ marginBottom: '0.5rem', padding: '0.5rem', width: '100%' }}
+                        />
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button className="btn btn-primary btn-xs" onClick={saveVilla2Edit}>
+                            <Save size={16} /> Save
+                          </button>
+                          <button className="btn btn-outline btn-xs" onClick={() => setEditingVilla2(null)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {img.title && (
+                          <div className="media-card__title">{img.title}</div>
+                        )}
+                        <div className="media-card__sub" style={{ 
+                          fontSize: '0.75rem', 
+                          color: 'var(--text-muted)',
+                          wordBreak: 'break-all',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical'
+                        }}>
+                          {img.url.startsWith('data:') ? 'Uploaded Image' : img.url}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="media-card__actions">
+                    {editingVilla2?.index !== idx && (
+                      <>
+                        <button className="btn btn-outline btn-xs" onClick={() => setEditingVilla2({ index: idx, title: img.title || '', description: img.description || '' })}>
+                          <Save size={16} /> Edit
+                        </button>
+                        <button className="btn btn-danger btn-xs" onClick={() => removeFromDraft('villa2', idx)}>
+                          <Trash2 size={16} /> Remove
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          </div>
+
+          <div className="analytics-section" style={{ marginTop: 'var(--spacing-2xl)' }}>
+            <h2>Villa 3 Images</h2>
+          <div className="media-add" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <input
+              type="file"
+              id="villa3-file-input"
+              accept="image/*"
+              onChange={(e) => setVilla3File(e.target.files?.[0] || null)}
+              style={{ padding: '0.5rem' }}
+            />
+            <input
+              type="text"
+              placeholder="Title (optional)"
+              value={villa3Title}
+              onChange={(e) => setVilla3Title(e.target.value)}
+            />
+            <button className="btn btn-primary btn-sm" onClick={addVilla3Image} disabled={!villa3File}>
+              <Plus size={18} /> Add to Villa 3
+            </button>
+          </div>
+          <div className="media-grid">
+            {villa3Draft.length === 0 ? (
+              <div className="empty-state">
+                <p>No images yet. Add images for Villa 3.</p>
+              </div>
+            ) : (
+              villa3Draft.map((img, idx) => (
+                <div key={`${img.url}-${idx}`} className="media-card">
+                  <ImageSlot src={img.url} alt={img.alt || img.title || 'Villa 3 image'} aspect="16 / 9" />
+                  <div className="media-card__meta">
+                    {editingVilla3?.index === idx ? (
+                      <div className="media-edit-form">
+                        <input
+                          type="text"
+                          placeholder="Title (optional)"
+                          value={editingVilla3.title || ''}
+                          onChange={(e) => setEditingVilla3({ ...editingVilla3, title: e.target.value })}
+                          style={{ marginBottom: '0.5rem', padding: '0.5rem', width: '100%' }}
+                        />
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button className="btn btn-primary btn-xs" onClick={saveVilla3Edit}>
+                            <Save size={16} /> Save
+                          </button>
+                          <button className="btn btn-outline btn-xs" onClick={() => setEditingVilla3(null)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {img.title && (
+                          <div className="media-card__title">{img.title}</div>
+                        )}
+                        <div className="media-card__sub" style={{ 
+                          fontSize: '0.75rem', 
+                          color: 'var(--text-muted)',
+                          wordBreak: 'break-all',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical'
+                        }}>
+                          {img.url.startsWith('data:') ? 'Uploaded Image' : img.url}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="media-card__actions">
+                    {editingVilla3?.index !== idx && (
+                      <>
+                        <button className="btn btn-outline btn-xs" onClick={() => setEditingVilla3({ index: idx, title: img.title || '', description: img.description || '' })}>
+                          <Save size={16} /> Edit
+                        </button>
+                        <button className="btn btn-danger btn-xs" onClick={() => removeFromDraft('villa3', idx)}>
+                          <Trash2 size={16} /> Remove
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
           </div>
         </div>
 
@@ -878,7 +1438,9 @@ function AdminMediaPage() {
               <div key={m._id} className="media-card">
                 <ImageSlot src={m.url} alt={m.title || 'Media'} aspect="21 / 9" />
                 <div className="media-card__meta">
-                  <div className="media-card__title">{m.title || 'Untitled'}</div>
+                  {m.title && (
+                    <div className="media-card__title">{m.title}</div>
+                  )}
                   <div className="media-card__sub">{m.url}</div>
                 </div>
                 <div className="media-card__actions">

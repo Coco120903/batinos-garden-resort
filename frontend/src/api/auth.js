@@ -17,6 +17,8 @@ export const login = async (credentials) => {
   if (response.data.token) {
     localStorage.setItem('token', response.data.token)
     localStorage.setItem('user', JSON.stringify(response.data.user))
+    // Set initial activity timestamp for auto-logout
+    localStorage.setItem('lastActivity', Date.now().toString())
   }
   return response.data
 }
@@ -40,11 +42,22 @@ export const verifyEmail = async (token, email) => {
 }
 
 /**
- * Logout (clear local storage)
+ * Logout (clear local storage and prevent back button)
  */
 export const logout = () => {
+  // Clear authentication data
   localStorage.removeItem('token')
   localStorage.removeItem('user')
+  localStorage.removeItem('lastActivity')
+  
+  // Clear session storage
+  sessionStorage.clear()
+  
+  // Replace current history entry to prevent back button navigation
+  // This ensures users can't go back to authenticated pages after logout
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, '', window.location.pathname)
+  }
 }
 
 /**
